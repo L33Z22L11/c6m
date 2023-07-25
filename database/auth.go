@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -185,7 +186,19 @@ func GetUidByUname(username string) (string, error) {
 	return uid, nil
 }
 
-func getUidByToken(token string) (string, error) {
+func GetUidByToken(token string) (string, error) {
+	// 检查令牌是否为空
+	if token == "" {
+		return "", fmt.Errorf("未提供访问令牌")
+	}
+
+	// 从请求头部的Authorization字段中提取令牌
+	tokenParts := strings.Split(token, " ")
+	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+		return "", fmt.Errorf("无效的访问令牌")
+	}
+	token = tokenParts[1]
+
 	// 从Redis中根据访问令牌获取用户ID
 	uid, err := rc.Get(context.Background(), token).Result()
 	if err != nil {

@@ -3,18 +3,29 @@ package util
 import (
 	db "c6m/database"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 var router = gin.Default()
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // 允许跨域连接
+	},
+}
 
 func InitWebServer() {
-	router.Static("/", "./web")
+	router.GET("/ws", VerifyToken(), handleWebSocket)
 	router.POST("/register", handleRegister)
 	router.POST("/login", handleLogin)
-	router.POST("/add-friend", handlerAddFriend)
+
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/app")
+	})
+	router.Static("/app", "./web")
 
 	err := router.Run(":4000")
 	if err != nil {
@@ -35,7 +46,9 @@ func handleRegister(c *gin.Context) {
 
 	// 返回响应
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -55,7 +68,9 @@ func handleLogin(c *gin.Context) {
 
 	// 返回响应
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 	c.Header("Authorization", "Bearer "+token)
@@ -65,11 +80,66 @@ func handleLogin(c *gin.Context) {
 	})
 }
 
-func handlerAddFriend(c *gin.Context) {
-	username := c.PostForm("username")
+func VerifyToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		uid, err := db.GetUidByToken(token)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		c.Set("uid", uid)
+		c.Next()
+	}
+}
+
+func handleWebSocket(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Println("WebSocket升级失败: ", err)
+		return
+	}
+
+	// 在这里可以处理WebSocket连接
+	uid := c.MustGet("uid").(string)
+	auth, _ := db.GetAuthByUID(uid)
+	conn.WriteJSON(&Message{
+		Type: "toast",
+		Text: fmt.Sprintf("欢迎用户%s", auth.Username),
+	})
+
+	// 读取和处理来自客户端的消息
+	for {
+		// 读取消息
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("WebSocket读消息失败: ", err)
+			break
+		}
+
+		// 在这里可以处理接收到的消息
+		// ...
+
+		// 发送响应消息
+		err = conn.WriteMessage(websocket.TextMessage, []byte("收到消息: "+string(msg)))
+		if err != nil {
+			log.Println("WebSocket响应失败: ", err)
+			break
+		}
+	}
+
+	// 关闭WebSocket连接
+	conn.Close()
+}
+
+func handleAddFriend(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+
 	friendName := c.PostForm("friend_name")
 
-	err := db.AddFriend(username, friendName)
+	err := db.AddFriend(uid, friendName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -78,7 +148,8 @@ func handlerAddFriend(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"username":   username,
-		"friendName": friendName,
+		"message":     "已发送好友申请",
+		"uid":         uid,
+		"friend_name": friendName,
 	})
 }

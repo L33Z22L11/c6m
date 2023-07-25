@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -26,7 +27,7 @@ func StartServer() {
 }
 
 func Test() {
-	if _, err := rc.Ping(rc.Context()).Result(); err != nil {
+	if _, err := rc.Ping(context.Background()).Result(); err != nil {
 		fmt.Printf("Redis测试失败: %s\n", err)
 		return
 	}
@@ -34,7 +35,7 @@ func Test() {
 }
 
 func StopServer() {
-	if _, err := rc.Shutdown(rc.Context()).Result(); err != nil {
+	if _, err := rc.Shutdown(context.Background()).Result(); err != nil {
 		fmt.Printf("Redis服务器关闭失败: %s\n", err)
 		return
 	}

@@ -1,11 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <title>POST请求示例</title>
 </head>
+
 <body>
-    <h1>Welcome to c6m</h1>
+  <h1>POST请求示例</h1>
+
+  <form action="/register" method="post">
+    <label for="username">用户名:</label>
+    <input type="text" id="username" name="username"><br><br>
+
+    <label for="password">密码:</label>
+    <input type="password" id="password" name="password"><br><br>
+
+    <input type="submit" value="注册">
+  </form>
+
+  <form action="/login" method="post">
+    <label for="username">用户名:</label>
+    <input type="text" id="username" name="username"><br><br>
+
+    <label for="password">密码:</label>
+    <input type="password" id="password" name="password"><br><br>
+
+    <input type="submit" value="登录">
+  </form>
+  <form action="/add-friend" method="post">
+    <label for="friend_name">用户名:</label>
+    <input type="text" id="username" name="username"><br><br>
+
+    <input type="submit" value="加好友">
+  </form>
 </body>
+
 </html>
