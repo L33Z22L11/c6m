@@ -1,7 +1,10 @@
-package util
+package routers
 
 import (
 	db "c6m/database"
+	"c6m/models"
+	"c6m/server"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,9 +21,12 @@ var upgrader = websocket.Upgrader{
 }
 
 func InitWebServer() {
-	router.GET("/ws", VerifyToken(), handleWebSocket)
 	router.POST("/register", handleRegister)
 	router.POST("/login", handleLogin)
+
+	router.GET("/ws", VerifyToken(), handleWebSocket)
+	router.POST("/friend/add", VerifyToken(), handleAddFriend)
+	router.POST("/friend/del", VerifyToken(), handleDelFriend)
 
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/app")
@@ -105,33 +111,28 @@ func handleWebSocket(c *gin.Context) {
 	// 在这里可以处理WebSocket连接
 	uid := c.MustGet("uid").(string)
 	auth, _ := db.GetAuthByUID(uid)
-	conn.WriteJSON(&Message{
-		Type: "toast",
-		Text: fmt.Sprintf("欢迎用户%s", auth.Username),
+	conn.WriteJSON(&models.Message{
+		Type:    "toast",
+		Content: fmt.Sprintf("欢迎用户%s", auth.Username),
 	})
 
 	// 读取和处理来自客户端的消息
 	for {
 		// 读取消息
-		_, msg, err := conn.ReadMessage()
+		_, msgJson, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("WebSocket读消息失败: ", err)
 			break
 		}
 
-		// 在这里可以处理接收到的消息
-		// ...
-
-		// 发送响应消息
-		err = conn.WriteMessage(websocket.TextMessage, []byte("收到消息: "+string(msg)))
-		if err != nil {
-			log.Println("WebSocket响应失败: ", err)
-			break
-		}
+		var msg models.Message
+		json.Unmarshal(msgJson, &msg)
+		server.ParseMsg(&msg)
 	}
 
 	// 关闭WebSocket连接
 	conn.Close()
+
 }
 
 func handleAddFriend(c *gin.Context) {
@@ -149,6 +150,26 @@ func handleAddFriend(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "已发送好友申请",
+		"uid":         uid,
+		"friend_name": friendName,
+	})
+}
+
+func handleDelFriend(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+
+	friendName := c.PostForm("friend_name")
+
+	err := db.DelFriend(uid, friendName)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":     "已删除好友",
 		"uid":         uid,
 		"friend_name": friendName,
 	})

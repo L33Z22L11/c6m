@@ -1,6 +1,7 @@
 package database
 
 import (
+	"c6m/models"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -18,18 +19,12 @@ import (
 )
 
 // 定义用户结构体
-type Auth struct {
-	Uid      string `json:"uid"`
-	Username string `json:"username"`
-	Hash     string `json:"hash"`
-	Salt     string `json:"salt"`
-}
-
-func CreateUser(username, password string) (*Auth, error) {
+func CreateUser(username, password string) (*models.Auth, error) {
 	// 验证用户名和密码是否符合规范
 	if !isVaildUname(username) {
 		return nil, fmt.Errorf("用户名 %s 格式错误: 仅限数字、字母和下划线, 3~18字符", username)
 	}
+
 	owner, _ := GetUidByUname(username)
 	if owner != "" {
 		return nil, fmt.Errorf("用户已注册")
@@ -43,7 +38,7 @@ func CreateUser(username, password string) (*Auth, error) {
 	salt := generateSalt()
 
 	// 创建新用户
-	auth := &Auth{
+	auth := &models.Auth{
 		Uid:      generateUid(),
 		Username: username,
 		Hash:     generateHash(password, salt),
@@ -118,7 +113,7 @@ func AuthUser(username, password string) (string, error) {
 
 // 生成 uid
 func generateUid() string {
-	uid := 10001
+	uid := 10000
 	lastUid, err := rc.Get(context.Background(), "lastUid").Result()
 	if err != redis.Nil {
 		uid, _ = strconv.Atoi(lastUid)
@@ -128,7 +123,7 @@ func generateUid() string {
 	return strconv.Itoa(uid)
 }
 
-func SaveAuth(auth *Auth) error {
+func SaveAuth(auth *models.Auth) error {
 	// 将用户信息序列化为 JSON 字符串
 	authJSON, err := json.Marshal(auth)
 	if err != nil {
@@ -162,14 +157,14 @@ func generateToken(uid string) (string, error) {
 	return token, nil
 }
 
-func GetAuthByUID(uid string) (*Auth, error) {
+func GetAuthByUID(uid string) (*models.Auth, error) {
 	userJSON, err := rc.HGet(context.Background(), "auth", uid).Bytes()
 	if err != nil {
 		return nil, err
 	}
 
 	// 将 JSON 字符串反序列化为用户结构体
-	var auth Auth
+	var auth models.Auth
 	err = json.Unmarshal(userJSON, &auth)
 	if err != nil {
 		return nil, err
