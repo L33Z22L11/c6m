@@ -1,8 +1,8 @@
 package main
 
 import (
-	db "c6m/database"
-	"c6m/routers"
+	"c6m/db"
+	"c6m/router"
 	"os"
 	"os/signal"
 )
@@ -15,7 +15,7 @@ func main() {
 	db.StartServer()
 	db.Test()
 
-	go routers.InitWebServer()
+	go router.InitWebServer()
 
 	// 等待信号
 	<-sigCh

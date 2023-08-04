@@ -1,4 +1,4 @@
-package models
+package model
 
 // 对话信息结构体
 type Conversation struct {

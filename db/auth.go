@@ -1,7 +1,7 @@
-package database
+package db
 
 import (
-	"c6m/models"
+	"c6m/model"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -19,7 +19,7 @@ import (
 )
 
 // 定义用户结构体
-func CreateUser(username, password string) (*models.Auth, error) {
+func CreateUser(username, password string) (*model.Auth, error) {
 	// 验证用户名和密码是否符合规范
 	if !isVaildUname(username) {
 		return nil, fmt.Errorf("用户名 %s 格式错误: 仅限数字、字母和下划线, 3~18字符", username)
@@ -38,7 +38,7 @@ func CreateUser(username, password string) (*models.Auth, error) {
 	salt := generateSalt()
 
 	// 创建新用户
-	auth := &models.Auth{
+	auth := &model.Auth{
 		Uid:      generateUid(),
 		Username: username,
 		Hash:     generateHash(password, salt),
@@ -123,7 +123,7 @@ func generateUid() string {
 	return strconv.Itoa(uid)
 }
 
-func SaveAuth(auth *models.Auth) error {
+func SaveAuth(auth *model.Auth) error {
 	// 将用户信息序列化为 JSON 字符串
 	authJSON, err := json.Marshal(auth)
 	if err != nil {
@@ -157,20 +157,25 @@ func generateToken(uid string) (string, error) {
 	return token, nil
 }
 
-func GetAuthByUID(uid string) (*models.Auth, error) {
+func GetAuthByUID(uid string) (*model.Auth, error) {
 	userJSON, err := rc.HGet(context.Background(), "auth", uid).Bytes()
 	if err != nil {
 		return nil, err
 	}
 
 	// 将 JSON 字符串反序列化为用户结构体
-	var auth models.Auth
+	var auth model.Auth
 	err = json.Unmarshal(userJSON, &auth)
 	if err != nil {
 		return nil, err
 	}
 
 	return &auth, nil
+}
+
+func MustGetUnameByUID(uid string) string {
+	auth, _ := GetAuthByUID(uid)
+	return auth.Username
 }
 
 func GetUidByUname(username string) (string, error) {
