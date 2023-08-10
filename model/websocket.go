@@ -1,16 +1,13 @@
 package model
 
-import (
-	"sync"
+import "github.com/gorilla/websocket"
 
-	"github.com/gorilla/websocket"
-)
-
-type ConnectionManager struct {
-	connections map[*websocket.Conn]bool
-	lock        sync.Mutex
+type Message struct {
+	Type    string `json:"type"`
+	Time    string `json:"time"`
+	Src     string `json:"src"`
+	Dest    string `json:"dest"`
+	Content string `json:"content"`
 }
 
-var Connections = ConnectionManager{
-	connections: make(map[*websocket.Conn]bool),
-}
+var Connections map[string]*websocket.Conn

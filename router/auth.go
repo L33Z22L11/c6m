@@ -60,6 +60,7 @@ func VerifyToken() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
+			c.Abort()
 			return
 		}
 		c.Set("uid", uid)

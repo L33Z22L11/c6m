@@ -2,37 +2,41 @@
 <html>
 
 <head>
-  <title>POST请求示例</title>
+  <title>c6m</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="./js/app.js"></script>
 </head>
 
 <body>
-  <h1>POST请求示例</h1>
+  <h1>c6m</h1>
 
-  <form action="/register" method="post">
-    <label for="username">用户名:</label>
-    <input type="text" id="username" name="username"><br><br>
-
-    <label for="password">密码:</label>
-    <input type="password" id="password" name="password"><br><br>
-
-    <input type="submit" value="注册">
-  </form>
-
-  <form action="/login" method="post">
-    <label for="username">用户名:</label>
-    <input type="text" id="username" name="username"><br><br>
-
-    <label for="password">密码:</label>
-    <input type="password" id="password" name="password"><br><br>
-
-    <input type="submit" value="登录">
-  </form>
-  <form action="/friend/add" method="post">
-    <label for="friend_name">用户名:</label>
-    <input type="text" id="username" name="username"><br><br>
-
-    <input type="submit" value="加好友">
-  </form>
+  <div>
+    <input type="text" id="username" required placeholder="用户名">
+    <br>
+    <input type="password" id="password" required placeholder="密码">
+    <br>
+    <button onclick="register()">注册</button>
+    <button onclick="login()">登录</button>
+  </div>
+  <br>
+  <div>
+    <button onclick="addFriend()">添加好友</button>
+    <button onclick="delFriend()">删除好友</button>
+    <br>
+    <button onclick="getFriendList()">获取好友列表</button>
+    <button onclick="getFriendReq()">查看好友请求</button>
+    <button onclick="respFriendReq()">处理好友请求</button>
+  </div>
+  <br>
+  <div>
+    <input type="text" id="msgType" placeholder="type" required value="single">
+    <br>
+    <input type="text" id="msgDest" placeholder="dest" required>
+    <br>
+    <textarea type="text" id="msgContent" placeholder="content" required></textarea>
+    <button onclick="send()">发送</button>
+  </div>
+  <div id="chatLog" style="display:flex;flex-direction:column-reverse;"></div>
 </body>
 
 </html>

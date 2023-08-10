@@ -1,6 +1,7 @@
 package router
 
 import (
+	"c6m/model"
 	"fmt"
 	"net/http"
 
@@ -19,7 +20,8 @@ func InitWebServer() {
 	router.POST("/register", handleRegister)
 	router.POST("/login", handleLogin)
 
-	router.GET("/ws", VerifyToken(), handleWebSocket)
+	model.Connections = make(map[string]*websocket.Conn)
+	router.GET("/ws", handleWebSocket)
 
 	router.POST("/friend/add", VerifyToken(), handleAddFriend)
 	router.POST("/friend/del", VerifyToken(), handleDelFriend)

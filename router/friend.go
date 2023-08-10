@@ -2,6 +2,9 @@ package router
 
 import (
 	"c6m/db"
+	"c6m/model"
+	"c6m/server"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,8 +13,12 @@ import (
 func handleAddFriend(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
 	friendName := c.PostForm("friend_name")
+	content := c.PostForm("content")
+	if content == "" {
+		content = fmt.Sprintf("我是%s", db.MustGetUnameByUID(uid))
+	}
 
-	err := db.AddFriend(uid, friendName)
+	friendUid, err := db.AddFriend(uid, friendName, content)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -19,6 +26,11 @@ func handleAddFriend(c *gin.Context) {
 		return
 	}
 
+	server.PushMsg(&model.Message{
+		Type: "friendReq",
+		Src:  uid,
+		Dest: friendUid,
+	})
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "已发送好友申请",
 		"friend_name": friendName,
@@ -59,7 +71,7 @@ func handleGetFriendReq(c *gin.Context) {
 
 func handleRespFriendReq(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
-	friendUid := c.PostForm("fuid")
+	friendUid := c.PostForm("friend_uid")
 	isAccept := c.PostForm("accept")
 
 	err := db.RespFriendReq(uid, friendUid, isAccept)
@@ -79,7 +91,7 @@ func handleRespFriendReq(c *gin.Context) {
 func handleListFriend(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
 
-	friendReqList, err := db.ListFriend(uid)
+	friendList, err := db.ListFriend(uid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -87,5 +99,5 @@ func handleListFriend(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, friendReqList)
+	c.JSON(http.StatusOK, friendList)
 }
