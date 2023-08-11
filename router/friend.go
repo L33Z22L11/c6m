@@ -27,9 +27,10 @@ func handleAddFriend(c *gin.Context) {
 	}
 
 	server.PushMsg(&model.Message{
-		Type: "friendReq",
-		Src:  uid,
-		Dest: friendUid,
+		Type:    "friendReq",
+		Src:     "0",
+		Dest:    friendUid,
+		Content: fmt.Sprintf("%s请求添加你为好友", db.MustGetUnameByUID(uid)),
 	})
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "已发送好友申请",
@@ -82,8 +83,22 @@ func handleRespFriendReq(c *gin.Context) {
 		return
 	}
 
+	var content string
+	if isAccept == "1" {
+		content = fmt.Sprintf("%s通过了你的好友申请", db.MustGetUnameByUID(uid))
+	} else {
+		content = fmt.Sprintf("%s拒绝了你的好友申请", db.MustGetUnameByUID(uid))
+	}
+
+	server.PushMsg(&model.Message{
+		Type:    "friendReq",
+		Src:     "0",
+		Dest:    friendUid,
+		Content: content,
+	})
+
 	c.JSON(http.StatusOK, gin.H{
-		"message":     "已添加好友",
+		"message":     "已处理请求",
 		"friend_name": db.MustGetUnameByUID(uid),
 	})
 }
