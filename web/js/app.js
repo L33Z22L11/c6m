@@ -1,32 +1,8 @@
-var socket = {
-  send: () => toast("尚未建立socket连接!"),
-  close: () => { }
-}
-
 function toast(...msg) {
   alert(msg)
 }
 
-function register() {
-  $.ajax({
-    url: "/register",
-    type: "POST",
-    data: {
-      username: $("#username").val(),
-      password: $("#password").val()
-    },
-    success: function (response) {
-      toast(JSON.stringify(response))
-    },
-    error: function (xhr, status, error) {
-      console.log(xhr.responseText)
-      toast(xhr.responseText)
-    }
-  })
-}
-
 function login() {
-  socket.close()
   $.ajax({
     url: "/login",
     type: "POST",
@@ -35,7 +11,8 @@ function login() {
       password: $("#password").val()
     },
     success: function (response) {
-      toast(JSON.stringify(response))
+      uid = response.uid
+      username = response.username
       // 将 token 保存到请求头的 Authorization 字段
       $.ajaxSetup({ headers: { "Authorization": "Bearer " + response.token } })
 
@@ -43,9 +20,12 @@ function login() {
       socket = new WebSocket(`ws://${location.host}/ws?token=Bearer ${response.token}`)
       // 接收到消息时的处理逻辑
       socket.onmessage = function (event) {
-        var message = event.data
-        displayMessage(message)
+        displayMessage(JSON.parse(event.data))
       }
+      $("#loginbtn").text("注销")
+      $("#loginbtn").attr('onclick', 'location.reload()')
+      $('#loginpanel').css('display', 'none')
+      getFriendList()
     },
     error: function (xhr, status, error) {
       toast(xhr.responseText)
@@ -54,11 +34,24 @@ function login() {
 }
 
 function getFriendList() {
+  var select = $('#msgDest')
+  select.html("")
   $.ajax({
     url: "/friend/all",
     type: "get",
     success: function (response) {
-      toast(JSON.stringify(response))
+      $('<option></option>').attr('value', 0).text("请选择好友").appendTo(select)
+      $.each(response, function (key, value) {
+        $('<option></option>')
+          .attr('value', key)
+          .text(value)
+          .appendTo(select)
+      });
+
+      $('#mySelect').change(function () {
+        dest = $(this).val();
+        console.log('选择的值为：', dest);
+      });
     },
     error: function (xhr, status, error) {
       toast(xhr.responseText)
@@ -136,19 +129,24 @@ function delFriend() {
 }
 
 function send() {
-  var msg = JSON.stringify({
+  var msg = {
     type: $("#msgType").val(),
-    // src: uid,
+    time: new Date().getTime(),
+    src: uid,
     dest: $("#msgDest").val(),
     content: $("#msgContent").val(),
-  })
-  socket.send(msg)
+  }
+  socket.send(JSON.stringify(msg))
   displayMessage(msg)
   $("#msgContent").val("");
 }
 
 // 显示消息
 function displayMessage(msg) {
-  var $chatLog = $("#chatLog")
-  $chatLog.append("<p>" + msg + "</p>")
+  console.log(msg)
+  var $chatlog = $("#chatlog")
+  $chatlog.append(`<div>
+    <div class="dim dp05">[${msg.type}] ${msg.src} ${new Date(msg.time)}</div>
+    ${msg.content}
+  </div>`)
 }

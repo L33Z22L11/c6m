@@ -19,10 +19,10 @@ import (
 )
 
 // 定义用户结构体
-func CreateUser(username, password string) (*model.Auth, error) {
+func CreateUser(username, password, question, answer string) (*model.Auth, error) {
 	// 验证用户名和密码是否符合规范
 	if !isVaildUname(username) {
-		return nil, fmt.Errorf("用户名 %s 格式错误: 仅限数字、字母和下划线, 3~18字符", username)
+		return nil, fmt.Errorf("用户名[%s]格式错误: 长度3~18, 仅限数字、字母和下划线", username)
 	}
 
 	owner, _ := GetUidByUname(username)
@@ -31,7 +31,7 @@ func CreateUser(username, password string) (*model.Auth, error) {
 	}
 
 	if !isVaildPw(password) {
-		return nil, fmt.Errorf("密码格式错误: 仅限键盘的的常见符号(ASCII 32~126), 6~32字符")
+		return nil, fmt.Errorf("密码格式错误: 长度6~32, 仅限常见字符(ASCII 32~126),")
 	}
 
 	// 生成随机的 salt 值
@@ -43,12 +43,14 @@ func CreateUser(username, password string) (*model.Auth, error) {
 		Username: username,
 		Hash:     generateHash(password, salt),
 		Salt:     salt,
+		Question: question,
+		Answer:   answer,
 	}
 
 	// 将用户保存到 Redis 哈希表中
 	err := SaveAuth(auth)
 	if err != nil {
-		return nil, fmt.Errorf("保存用户 %s 到Redis: %v", username, err)
+		return nil, fmt.Errorf("保存用户[%s]到Redis: %v", username, err)
 	}
 
 	return auth, nil
@@ -86,41 +88,41 @@ func generateHash(password, salt string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func AuthUser(username, password string) (string, error) {
+func AuthUser(username, password string) (string, string, error) {
 	// 根据用户名从数据库中获取用户信息
 	uid, err := GetUidByUname(username)
 	if err != nil {
-		return "", fmt.Errorf("数据库中没有这个用户: %v", err)
+		return "", "", fmt.Errorf("数据库中没有这个用户: %v", err)
 	}
-	auth, _ := GetAuthByUID(uid)
+	auth, _ := GetAuthByUid(uid)
 
 	// 使用用户的 salt 值和密码生成哈希值
 	hash := generateHash(password, auth.Salt)
 
 	// 比较生成的哈希值和用户存储的哈希值是否一致
 	if hash != auth.Hash {
-		return "", errors.New("密码错误")
+		return "", "", errors.New("密码错误")
 	}
 
 	// 生成访问令牌
 	token, err := generateToken(auth.Uid)
 	if err != nil {
-		return "", fmt.Errorf("token 生成失败: %v", err)
+		return "", "", fmt.Errorf("token 生成失败: %v", err)
 	}
 
-	return token, nil
+	return uid, token, nil
 }
 
 // 生成 uid
 func generateUid() string {
-	uid := 10000
+	uid := 1000
 	lastUid, err := rc.Get(context.Background(), "lastUid").Result()
 	if err != redis.Nil {
 		uid, _ = strconv.Atoi(lastUid)
 	}
 	uid++
 	rc.Set(context.Background(), "lastUid", uid, 0).Err()
-	return strconv.Itoa(uid)
+	return fmt.Sprintf("u%d", uid)
 }
 
 func SaveAuth(auth *model.Auth) error {
@@ -157,15 +159,15 @@ func generateToken(uid string) (string, error) {
 	return token, nil
 }
 
-func GetAuthByUID(uid string) (*model.Auth, error) {
-	userJSON, err := rc.HGet(context.Background(), "auth", uid).Bytes()
+func GetAuthByUid(uid string) (*model.Auth, error) {
+	userJson, err := rc.HGet(context.Background(), "auth", uid).Bytes()
 	if err != nil {
 		return nil, err
 	}
 
 	// 将 JSON 字符串反序列化为用户结构体
 	var auth model.Auth
-	err = json.Unmarshal(userJSON, &auth)
+	err = json.Unmarshal(userJson, &auth)
 	if err != nil {
 		return nil, err
 	}
@@ -173,15 +175,10 @@ func GetAuthByUID(uid string) (*model.Auth, error) {
 	return &auth, nil
 }
 
-func MustGetUnameByUID(uid string) string {
-	auth, _ := GetAuthByUID(uid)
-	return auth.Username
-}
-
 func GetUidByUname(username string) (string, error) {
 	uid, err := rc.HGet(context.Background(), "uid", username).Result()
 	if err == redis.Nil {
-		return "", fmt.Errorf("用户 %s 不存在", username)
+		return "", fmt.Errorf("用户[%s]不存在", username)
 	}
 	return uid, nil
 }
@@ -210,4 +207,52 @@ func GetUidByToken(token string) (string, error) {
 	}
 
 	return uid, nil
+}
+
+// 生成 gid
+func generateGid() string {
+	gid := 1000
+	lastGid, err := rc.Get(context.Background(), "lastGid").Result()
+	if err != redis.Nil {
+		gid, _ = strconv.Atoi(lastGid)
+	}
+	gid++
+	rc.Set(context.Background(), "lastGid", gid, 0).Err()
+	return fmt.Sprintf("g%d", gid)
+}
+
+func GetGroupByGid(gid string) (*model.Group, error) {
+	groupJson, err := rc.HGet(context.Background(), "group", gid).Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	// 将 JSON 字符串反序列化为群结构体
+	var group model.Group
+	err = json.Unmarshal(groupJson, &group)
+	if err != nil {
+		return nil, err
+	}
+
+	return &group, nil
+}
+
+func GetGidByGname(gname string) (string, error) {
+	uid, err := rc.HGet(context.Background(), "gid", gname).Result()
+	if err == redis.Nil {
+		return "", fmt.Errorf("群[%s]不存在", gname)
+	}
+	return uid, nil
+}
+
+func MustGetNameById(id string) string {
+	switch id[0] {
+	case 'u':
+		auth, _ := GetAuthByUid(id)
+		return auth.Username
+	case 'g':
+		group, _ := GetGroupByGid(id)
+		return group.Gname
+	}
+	return "[InvalidName]"
 }

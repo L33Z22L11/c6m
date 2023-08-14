@@ -90,12 +90,12 @@ func ListFriend(uid string) (map[string]string, error) {
 	friendMap := make(map[string]string)
 
 	for _, friendUid := range friendList {
-		friendMap[friendUid] = MustGetUnameByUID(friendUid)
+		friendMap[friendUid] = MustGetNameById(friendUid)
 	}
 	return friendMap, err
 }
 
-func IsFriend(uid string, friendUid string) bool {
+func HaveFriend(uid string, friendUid string) bool {
 	// 查询发送者的好友列表
 	friendMap, _ := ListFriend(uid)
 

@@ -29,6 +29,12 @@ func InitWebServer() {
 	router.POST("/friend/req", VerifyToken(), handleRespFriendReq)
 	router.GET("/friend/all", VerifyToken(), handleListFriend)
 
+	router.POST("/group/add", VerifyToken(), handleAddGroup)
+	router.POST("/group/del", VerifyToken(), handleDelGroup)
+	router.GET("/group/req", VerifyToken(), handleGetGroupReq)
+	router.POST("/group/req", VerifyToken(), handleRespGroupReq)
+	router.GET("/group/all", VerifyToken(), handleListGroup)
+
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/app")
 	})

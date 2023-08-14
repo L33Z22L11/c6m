@@ -27,7 +27,7 @@ func handleWebSocket(c *gin.Context) {
 		return
 	}
 
-	// 处理WebSocket连接
+	// 阻止重复登录
 	if model.Connections[uid] != nil {
 		model.Connections[uid].Close()
 		delete(model.Connections, uid)
@@ -35,10 +35,9 @@ func handleWebSocket(c *gin.Context) {
 	model.Connections[uid] = conn
 
 	msg := model.Message{
-		Type:    "toast",
-		Src:     "0",
+		Src:     "system",
 		Dest:    uid,
-		Content: fmt.Sprintf("欢迎用户%s", db.MustGetUnameByUID(uid)),
+		Content: fmt.Sprintf("欢迎用户%s", db.MustGetNameById(uid)),
 	}
 	server.PushMsg(&msg)
 

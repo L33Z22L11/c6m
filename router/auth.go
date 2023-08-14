@@ -12,9 +12,11 @@ func handleRegister(c *gin.Context) {
 	// 获取请求参数
 	username := c.PostForm("username")
 	password := c.PostForm("password")
+	question := c.PostForm("question")
+	answer := c.PostForm("answer")
 
 	// 用户注册逻辑
-	user, err := db.CreateUser(username, password)
+	user, err := db.CreateUser(username, password, question, answer)
 
 	// 返回响应
 	if err != nil {
@@ -36,7 +38,7 @@ func handleLogin(c *gin.Context) {
 	password := c.PostForm("password")
 
 	// 用户登录逻辑
-	token, err := db.AuthUser(username, password)
+	uid, token, err := db.AuthUser(username, password)
 
 	// 返回响应
 	if err != nil {
@@ -47,6 +49,7 @@ func handleLogin(c *gin.Context) {
 	}
 	c.Header("Authorization", "Bearer "+token)
 	c.JSON(http.StatusOK, gin.H{
+		"uid":      uid,
 		"username": username,
 		"token":    token,
 	})

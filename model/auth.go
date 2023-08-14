@@ -5,4 +5,6 @@ type Auth struct {
 	Username string `json:"username"`
 	Hash     string `json:"hash"`
 	Salt     string `json:"salt"`
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
 }

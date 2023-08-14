@@ -15,7 +15,7 @@ func handleAddFriend(c *gin.Context) {
 	friendName := c.PostForm("friend_name")
 	content := c.PostForm("content")
 	if content == "" {
-		content = fmt.Sprintf("我是%s", db.MustGetUnameByUID(uid))
+		content = fmt.Sprintf("我是%s", db.MustGetNameById(uid))
 	}
 
 	friendUid, err := db.AddFriend(uid, friendName, content)
@@ -27,10 +27,9 @@ func handleAddFriend(c *gin.Context) {
 	}
 
 	server.PushMsg(&model.Message{
-		Type:    "friendReq",
-		Src:     "0",
+		Src:     "friendReq",
 		Dest:    friendUid,
-		Content: fmt.Sprintf("%s请求添加你为好友", db.MustGetUnameByUID(uid)),
+		Content: fmt.Sprintf("%s请求添加你为好友", db.MustGetNameById(uid)),
 	})
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "已发送好友申请",
@@ -85,21 +84,20 @@ func handleRespFriendReq(c *gin.Context) {
 
 	var content string
 	if isAccept == "1" {
-		content = fmt.Sprintf("%s通过了你的好友申请", db.MustGetUnameByUID(uid))
+		content = fmt.Sprintf("%s通过了你的好友申请", db.MustGetNameById(uid))
 	} else {
-		content = fmt.Sprintf("%s拒绝了你的好友申请", db.MustGetUnameByUID(uid))
+		content = fmt.Sprintf("%s拒绝了你的好友申请", db.MustGetNameById(uid))
 	}
 
 	server.PushMsg(&model.Message{
-		Type:    "friendReq",
-		Src:     "0",
+		Src:     "friendReq",
 		Dest:    friendUid,
 		Content: content,
 	})
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "已处理请求",
-		"friend_name": db.MustGetUnameByUID(uid),
+		"friend_name": db.MustGetNameById(uid),
 	})
 }
 

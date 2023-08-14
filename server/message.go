@@ -5,7 +5,6 @@ import (
 	"c6m/model"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 )
 
@@ -17,17 +16,14 @@ func PushMsg(msg *model.Message) {
 
 	if !IsVaildMsg(msg) {
 		msg = &model.Message{
-			Type:    "toast",
-			Src:     "0",
+			Src:     "system",
 			Dest:    msg.Src,
 			Content: fmt.Sprintf("没有权限发送这条消息：%s", msgJson),
 		}
 	}
-	if msg.Dest[0] == '-' {
-		panic("暂不支持群聊推送")
-	}
 
-	msg.Time = strconv.FormatInt(time.Now().UnixMicro(), 10)
+	msg.Time = time.Now().UnixNano() / int64(time.Millisecond)
+
 	if model.Connections[msg.Dest] == nil {
 		db.AddMsg()
 		return
@@ -37,15 +33,14 @@ func PushMsg(msg *model.Message) {
 }
 
 func IsVaildMsg(msg *model.Message) bool {
-	if msg.Src == "0" {
-		return true
+	if msg.Src[0] == 'u' {
+		if msg.Dest[0] == 'u' {
+			return db.HaveFriend(msg.Src, msg.Dest)
+		} else if msg.Dest[0] == 'g' {
+			return db.HaveGroup(msg.Src, msg.Dest)
+		}
 	}
-	switch msg.Type {
-	case "single":
-		return db.IsFriend(msg.Src, msg.Dest)
-	case "group":
-	}
-	return false
+	return true
 }
 
 // 登录时检查离线消息队列
