@@ -79,12 +79,10 @@ button:hover {
 
 #main {
     display: flex;
+    overflow: auto;
     align-items: center;
     flex-direction: column;
-    justify-content: space-between;
-
     height: 100vh;
-    overflow: auto;
 }
 
 #main>* {
@@ -105,6 +103,11 @@ footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
 }
 
 #loginpanel {
@@ -142,19 +145,30 @@ footer {
     margin: .5em;
 }
 
-#chatlog {
-    font-family: monospace;
+footer,
+.dim {
+    color: rgba(0, 0, 0, .5);
+}
 
-    width: 90%;
-    padding: .5em;
+#toast {
+    font-family: monospace;
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    width: 50%;
 
     word-wrap: break-word;
 
-    border-radius: .5em;
-    background: rgba(247, 247, 255, .5);
 }
 
-footer,
-.dim {
-    opacity: .6;
+#toast>* {
+    margin: .5em;
+    padding: .5em;
+    border-radius: .5em;
+    background: rgba(247, 247, 255, .5);
+
 }

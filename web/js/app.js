@@ -1,7 +1,3 @@
-function toast(...msg) {
-  alert(msg)
-}
-
 function login() {
   $.ajax({
     url: "/login",
@@ -20,7 +16,7 @@ function login() {
       socket = new WebSocket(`ws://${location.host}/ws?token=Bearer ${response.token}`)
       // 接收到消息时的处理逻辑
       socket.onmessage = function (event) {
-        displayMessage(JSON.parse(event.data))
+        toast(JSON.parse(event.data))
       }
       $("#loginbtn").text("注销")
       $("#loginbtn").attr('onclick', 'location.reload()')
@@ -40,17 +36,12 @@ function getFriendList() {
     url: "/friend/all",
     type: "get",
     success: function (response) {
-      $('<option></option>').attr('value', 0).text("请选择好友").appendTo(select)
+      $('<option></option>').attr('value', 0).text("请选择").appendTo(select)
       $.each(response, function (key, value) {
         $('<option></option>')
           .attr('value', key)
           .text(value)
           .appendTo(select)
-      });
-
-      $('#mySelect').change(function () {
-        dest = $(this).val();
-        console.log('选择的值为：', dest);
       });
     },
     error: function (xhr, status, error) {
@@ -73,9 +64,9 @@ function getFriendReq() {
 }
 
 function respFriendReq() {
-  friend_uid = prompt("好友uid")
+  var friend_uid = prompt("好友uid")
   if (!friend_uid) return
-  accept = prompt("同意填1,拒绝填0")
+  var accept = prompt("同意填1,拒绝填0")
   if (accept != '0' && accept != '1') return
   $.ajax({
     url: "/friend/req",
@@ -95,11 +86,13 @@ function respFriendReq() {
 }
 
 function addFriend() {
+  var friend_name = prompt("好友名")
+  if (!friend_name) return
   $.ajax({
     url: "/friend/add",
     type: "POST",
     data: {
-      friend_name: prompt("好友名"),
+      friend_name: friend_name
     },
     success: function (response) {
       toast(JSON.stringify(response))
@@ -112,11 +105,13 @@ function addFriend() {
 }
 
 function delFriend() {
+  var friend_name = prompt("好友名")
+  if (!friend_name) return
   $.ajax({
     url: "/friend/del",
     type: "POST",
     data: {
-      friend_name: prompt("好友名"),
+      friend_name: friend_name,
     },
     success: function (response) {
       toast(JSON.stringify(response))
@@ -134,19 +129,29 @@ function send() {
     time: new Date().getTime(),
     src: uid,
     dest: $("#msgDest").val(),
-    content: $("#msgContent").val(),
+    content: `${username}: ${$("#msgContent").val()}`,
   }
   socket.send(JSON.stringify(msg))
-  displayMessage(msg)
+  // toast(msg)
   $("#msgContent").val("");
 }
 
 // 显示消息
-function displayMessage(msg) {
-  console.log(msg)
-  var $chatlog = $("#chatlog")
-  $chatlog.append(`<div>
-    <div class="dim dp05">[${msg.type}] ${msg.src} ${new Date(msg.time)}</div>
-    ${msg.content}
-  </div>`)
+function toast(msg) {
+  console.log(msg);
+  var $toast = $("#toast");
+  var toastHtml = `<div>${msg.content ?
+    `<div class="dim dp05">${msg.src} ${new Date(msg.time)}</div>
+      ${msg.content}` : msg}</div>`;
+  $toast.prepend(toastHtml);
+
+  setTimeout(function () {
+    $toast.children().last().fadeOut(500, function () {
+      $(this).remove();
+    });
+  }, 3000);
+}
+
+function showHistory() {
+
 }

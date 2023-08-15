@@ -37,7 +37,7 @@ func handleWebSocket(c *gin.Context) {
 	msg := model.Message{
 		Src:     "system",
 		Dest:    uid,
-		Content: fmt.Sprintf("欢迎用户%s", db.MustGetNameById(uid)),
+		Content: "欢迎用户" + db.MustGetNameById(uid),
 	}
 	server.PushMsg(&msg)
 

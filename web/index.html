@@ -12,24 +12,28 @@
 <body>
   <div id="loginpanel">
     <div>
-      <input type="text" id="username" required placeholder="用户名">
+      <input id="username" placeholder="用户名">
       <br>
-      <input type="password" id="password" required placeholder="密码">
+      <input type="password" id="password" placeholder="密码">
       <br>
       <div class="alist">
         <button onclick="login()">登录</button>
         <a href="./register.html">注册</a>
-        <a onclick="resetPw()">找回密码</a>
+        <a href="./resetpw.html">忘记密码</a>
       </div>
     </div>
   </div>
+
   <div id="main">
     <nav>
       <h1 style="opacity:.9">c6m</h1>
-      <button id="loginbtn" onclick="$('#loginpanel').css('display','')">登录</button>
+      <div>
+        <button id="loginbtn" onclick="$('#loginpanel').css('display','')">登录</button>
+        <button onclick="window.open(`./changepw.html?username=${username}`,'_self')">修改密码</button>
+      </div>
     </nav>
 
-    <div class="alist">
+    <div>
       <button onclick="addFriend()">添加好友</button>
       <button onclick="delFriend()">删除好友</button>
       <button onclick="getFriendReq()">查看好友请求</button>
@@ -37,22 +41,26 @@
     </div>
 
     <div>
-      <select id="msgDest"></select>
+      <select id="msgDest" onchange="showHistory()"></select>
       <button onclick="getFriendList()"><i class="fa-solid fa-rotate"></i></button>
-      <button onclick="send()">发送</button>
+      <span class="dim">Ctrl+Enter发送</span>
       <br>
       <textarea class="fullwidth" type="text" id="msgContent" placeholder="content" required></textarea>
-    </div>
-
-    <div class="fullwidth" id="chatlog">
+      <script>
+        $(document).on('keydown', '#msgContent', function (event) {
+          if (event.ctrlKey && event.keyCode === 13) send()
+        })
+      </script>
     </div>
     <footer>
-      <p>©2023 Zhilu</p>
+      <p style="opacity:.9">©2023 Zhilu</p>
       <div class="iconset">
         <a href="https://github.com/l33z22l11/c6m"><i class="fa-brands fa-github"></i></a>
       </div>
     </footer>
   </div>
+
+  <div id="toast"></div>
 </body>
 
 </html>

@@ -4,7 +4,6 @@ import (
 	"c6m/db"
 	"c6m/model"
 	"c6m/server"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +14,7 @@ func handleAddFriend(c *gin.Context) {
 	friendName := c.PostForm("friend_name")
 	content := c.PostForm("content")
 	if content == "" {
-		content = fmt.Sprintf("我是%s", db.MustGetNameById(uid))
+		content = "我是" + db.MustGetNameById(uid)
 	}
 
 	friendUid, err := db.AddFriend(uid, friendName, content)
@@ -29,7 +28,7 @@ func handleAddFriend(c *gin.Context) {
 	server.PushMsg(&model.Message{
 		Src:     "friendReq",
 		Dest:    friendUid,
-		Content: fmt.Sprintf("%s请求添加你为好友", db.MustGetNameById(uid)),
+		Content: db.MustGetNameById(uid) + "请求添加你为好友",
 	})
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "已发送好友申请",
@@ -84,9 +83,9 @@ func handleRespFriendReq(c *gin.Context) {
 
 	var content string
 	if isAccept == "1" {
-		content = fmt.Sprintf("%s通过了你的好友申请", db.MustGetNameById(uid))
+		content = db.MustGetNameById(uid) + "通过了你的好友申请"
 	} else {
-		content = fmt.Sprintf("%s拒绝了你的好友申请", db.MustGetNameById(uid))
+		content = db.MustGetNameById(uid) + "拒绝了你的好友申请"
 	}
 
 	server.PushMsg(&model.Message{

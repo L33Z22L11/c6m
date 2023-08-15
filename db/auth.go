@@ -21,7 +21,7 @@ import (
 // 定义用户结构体
 func CreateUser(username, password, question, answer string) (*model.Auth, error) {
 	// 验证用户名和密码是否符合规范
-	if !isVaildUname(username) {
+	if !isValidUname(username) {
 		return nil, fmt.Errorf("用户名[%s]格式错误: 长度3~18, 仅限数字、字母和下划线", username)
 	}
 
@@ -30,8 +30,12 @@ func CreateUser(username, password, question, answer string) (*model.Auth, error
 		return nil, fmt.Errorf("用户已注册")
 	}
 
-	if !isVaildPw(password) {
+	if !isValidPw(password) {
 		return nil, fmt.Errorf("密码格式错误: 长度6~32, 仅限常见字符(ASCII 32~126),")
+	}
+
+	if len(answer) == 0 {
+		return nil, fmt.Errorf("必须填写验证答案")
 	}
 
 	// 生成随机的 salt 值
@@ -56,13 +60,13 @@ func CreateUser(username, password, question, answer string) (*model.Auth, error
 	return auth, nil
 }
 
-func isVaildUname(username string) bool {
+func isValidUname(username string) bool {
 	isVaildCharset := regexp.MustCompile("^[0-9A-Z_a-z]+$").MatchString(username)
 	haveProperLength := len(username) >= 3 && len(username) <= 18
 	return isVaildCharset && haveProperLength
 }
 
-func isVaildPw(password string) bool {
+func isValidPw(password string) bool {
 	isVaildCharset := regexp.MustCompile("^[ -~]+$").MatchString(password)
 	haveProperLength := len(password) >= 6 && len(password) <= 32
 	return isVaildCharset && haveProperLength
@@ -113,6 +117,91 @@ func AuthUser(username, password string) (string, string, error) {
 	return uid, token, nil
 }
 
+func ChangePassword(username, oldPassword, newPassword string) error {
+	uid, err := GetUidByUname(username)
+	if err != nil {
+		return fmt.Errorf("用户[%s]不存在", username)
+	}
+
+	auth, _ := GetAuthByUid(uid)
+
+	// 验证旧密码是否正确
+	if generateHash(oldPassword, auth.Salt) != auth.Hash {
+		return fmt.Errorf("旧密码不正确")
+	}
+
+	// 验证新密码是否符合规范
+	if !isValidPw(newPassword) {
+		return fmt.Errorf("新密码格式错误: 长度6~32, 仅限常见字符(ASCII 32~126)")
+	}
+
+	// 生成新的 salt 值
+	newSalt := generateSalt()
+
+	// 更新密码信息
+	auth.Hash = generateHash(newPassword, newSalt)
+	auth.Salt = newSalt
+
+	// 更新用户信息到 Redis 哈希表中
+	err = SaveAuth(auth)
+	if err != nil {
+		return fmt.Errorf("保存用户信息到Redis失败: %v", err)
+	}
+
+	return nil
+}
+
+func GetAuthQuestionByUname(username string) (string, error) {
+	// 验证用户名是否存在
+	uid, err := GetUidByUname(username)
+	if err != nil {
+		return "", fmt.Errorf("获取用户名失败: %v", err)
+	}
+	if uid == "" {
+		return "", fmt.Errorf("用户名不存在")
+	}
+
+	// 获取用户的安全问题
+	auth, _ := GetAuthByUid(uid)
+	return auth.Question, nil
+}
+
+func ResetPwByAnswer(username, answer, newPassword string) error {
+	// 验证用户名是否存在
+	uid, err := GetUidByUname(username)
+	if err != nil {
+		return fmt.Errorf("获取用户名失败: %v", err)
+	}
+	if uid == "" {
+		return fmt.Errorf("用户名不存在")
+	}
+
+	// 获取用户的安全问题答案
+	auth, _ := GetAuthByUid(uid)
+	if answer != auth.Answer {
+		return fmt.Errorf("答案错误")
+	}
+	// 验证新密码是否符合规范
+	if !isValidPw(newPassword) {
+		return fmt.Errorf("新密码格式错误: 长度6~32, 仅限常见字符(ASCII 32~126)")
+	}
+
+	// 生成新的 salt 值
+	newSalt := generateSalt()
+
+	// 更新密码信息
+	auth.Hash = generateHash(newPassword, newSalt)
+	auth.Salt = newSalt
+
+	// 更新用户信息到 Redis 哈希表中
+	err = SaveAuth(auth)
+	if err != nil {
+		return fmt.Errorf("保存用户信息到Redis失败: %v", err)
+	}
+
+	return nil
+}
+
 // 生成 uid
 func generateUid() string {
 	uid := 1000
@@ -127,7 +216,7 @@ func generateUid() string {
 
 func SaveAuth(auth *model.Auth) error {
 	// 将用户信息序列化为 JSON 字符串
-	authJSON, err := json.Marshal(auth)
+	authJson, err := json.Marshal(auth)
 	if err != nil {
 		return err
 	}
@@ -137,7 +226,7 @@ func SaveAuth(auth *model.Auth) error {
 	if err != nil {
 		return err
 	}
-	err = rc.HSet(context.Background(), "auth", auth.Uid, authJSON).Err()
+	err = rc.HSet(context.Background(), "auth", auth.Uid, authJson).Err()
 	if err != nil {
 		return err
 	}

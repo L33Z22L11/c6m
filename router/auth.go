@@ -70,3 +70,49 @@ func VerifyToken() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func handleChangePw(c *gin.Context) {
+	// 获取请求参数
+	username := c.PostForm("username")
+	oldPassword := c.PostForm("old_password")
+	newPassword := c.PostForm("new_password")
+
+	// 调用 ChangePassword 函数修改密码
+	err := db.ChangePassword(username, oldPassword, newPassword)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "密码修改成功"})
+}
+
+func handleAuthQuestion(c *gin.Context) {
+	// 获取请求参数
+	username := c.Query("username")
+
+	// 调用 GetAuthQuestionByUname 函数获取安全问题
+	question, err := db.GetAuthQuestionByUname(username)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"question": question})
+}
+
+func handleResetPw(c *gin.Context) {
+	// 获取请求参数
+	username := c.PostForm("username")
+	answer := c.PostForm("answer")
+	newPassword := c.PostForm("new_password")
+
+	// 调用 ResetPwByAnswer 函数重置密码
+	err := db.ResetPwByAnswer(username, answer, newPassword)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset successfully"})
+}

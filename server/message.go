@@ -24,10 +24,11 @@ func PushMsg(msg *model.Message) {
 
 	msg.Time = time.Now().UnixNano() / int64(time.Millisecond)
 
-	if model.Connections[msg.Dest] == nil {
-		db.AddMsg()
-		return
-	}
+	db.AddMsg(msg)
+	// if model.Connections[msg.Dest] == nil {
+	// 	db.AddMsg()
+	// 	return
+	// }
 
 	model.Connections[msg.Dest].WriteJSON(msg)
 }

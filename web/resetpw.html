@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="./css/style.css">
   <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdn.staticfile.org/jquery/3.7.0/jquery.min.js"></script>
-  <title>注册 - c6m</title>
+  <title>重置密码 - c6m</title>
 </head>
 
 <body id="main">
@@ -16,17 +16,19 @@
   </nav>
   <div>
     <p>用户名长度3~18, 密码长度6~32</p>
-    <input type="text" id="username" placeholder="用户名">
+    <input id="username" placeholder="用户名">
     <br>
-    <input type="password" id="password" placeholder="密码">
+    <button onclick="getQuestion()">获取验证问题</button>
     <br>
-    <input type="password" id="password-confirm" placeholder="重复密码">
+    <div>验证问题: <span id="question">未获取</span></div>
     <br>
-    <input type="test" id="question" placeholder="验证问题">
+    <input id="answer" placeholder="验证答案">
     <br>
-    <input type="test" id="answer" placeholder="验证答案">
+    <input type="password" id="new-password" placeholder="新密码">
     <br>
-    <button onclick="register()">注册</button>
+    <input type="password" id="new-password-confirm" placeholder="重复密码">
+    <br>
+    <button onclick="resetPw()">重置密码</button>
   </div>
   <footer>
     <p>©2023 Zhilu</p>
@@ -36,19 +38,30 @@
   </footer>
 </body>
 <script>
-  function register() {
-    if ($("#password").val() != $("#password-confirm").val()) {
+  function getQuestion() {
+    $.ajax({
+      url: "/authquestion",
+      type: "GET",
+      data: {
+        username: $("#username").val()
+      },
+      success: function (response) {
+        $("#question").text(response.question)
+      }
+    })
+  }
+  function resetPw() {
+    if ($("#new-password").val() != $("#new-password-confirm").val()) {
       alert("两次输入的密码不一致")
       return
     }
     $.ajax({
-      url: "/register",
+      url: "/resetpw",
       type: "POST",
       data: {
         username: $("#username").val(),
-        password: $("#password").val(),
-        question: $("#question").val(),
         answer: $("#answer").val(),
+        new_password: $("#new-password").val(),
       },
       success: function (response) {
         history.back()
@@ -57,9 +70,8 @@
         // console.log(xhr.responseText)
         alert(xhr.responseText)
       }
-    })
+    });
   }
-
 </script>
 
 </html>

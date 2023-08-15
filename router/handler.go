@@ -19,9 +19,13 @@ var upgrader = websocket.Upgrader{
 func InitWebServer() {
 	router.POST("/register", handleRegister)
 	router.POST("/login", handleLogin)
+	router.POST("/changepw", handleChangePw)
+	router.GET("/authquestion", handleAuthQuestion)
+	router.POST("/resetpw", handleResetPw)
 
 	model.Connections = make(map[string]*websocket.Conn)
 	router.GET("/ws", handleWebSocket)
+	router.GET("/history", VerifyToken(), handleGetHistory)
 
 	router.POST("/friend/add", VerifyToken(), handleAddFriend)
 	router.POST("/friend/del", VerifyToken(), handleDelFriend)
@@ -46,4 +50,8 @@ func InitWebServer() {
 		return
 	}
 	fmt.Println("网页服务器启动")
+}
+
+func handleGetHistory() {
+
 }
