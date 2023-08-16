@@ -36,8 +36,8 @@ func handleAddGroup(c *gin.Context) {
 	})
 }
 
-func handleDelGroup(c *gin.Context) {
-	guid := c.MustGet("guid").(string)
+func handleLeaveGroup(c *gin.Context) {
+	guid := c.MustGet("uid").(string)
 	groupName := c.PostForm("group_name")
 
 	err := db.LeaveGroup(guid, groupName)
@@ -49,13 +49,13 @@ func handleDelGroup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":    "已删除好友",
+		"message":    "已退群",
 		"group_name": groupName,
 	})
 }
 
 func handleGetGroupReq(c *gin.Context) {
-	guid := c.MustGet("guid").(string)
+	guid := c.MustGet("uid").(string)
 
 	groupReqList, err := db.GetGroupReq(guid)
 	if err != nil {
@@ -69,7 +69,7 @@ func handleGetGroupReq(c *gin.Context) {
 }
 
 func handleRespGroupReq(c *gin.Context) {
-	guid := c.MustGet("guid").(string)
+	guid := c.MustGet("uid").(string)
 	groupGuid := c.PostForm("group_guid")
 	isAccept := c.PostForm("accept")
 
@@ -101,7 +101,7 @@ func handleRespGroupReq(c *gin.Context) {
 }
 
 func handleListGroup(c *gin.Context) {
-	guid := c.MustGet("guid").(string)
+	guid := c.MustGet("uid").(string)
 
 	groupList, err := db.ListGroupMembers(guid)
 	if err != nil {

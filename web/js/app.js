@@ -1,3 +1,5 @@
+var $history = $("#history")
+
 function login() {
   $.ajax({
     url: "/login",
@@ -18,10 +20,10 @@ function login() {
       socket.onmessage = function (event) {
         toast(JSON.parse(event.data))
       }
-      $("#loginbtn").text("注销")
+      $("#loginbtn").html("<i class='fa-solid fa-arrow-right-from-bracket'></i>")
       $("#loginbtn").attr('onclick', 'location.reload()')
       $('#loginpanel').css('display', 'none')
-      getFriendList()
+      updateList()
     },
     error: function (xhr, status, error) {
       toast(xhr.responseText)
@@ -29,20 +31,43 @@ function login() {
   })
 }
 
-function getFriendList() {
+function updateList() {
   var select = $('#msgDest')
   select.html("")
   $.ajax({
     url: "/friend/all",
     type: "get",
     success: function (response) {
-      $('<option></option>').attr('value', 0).text("请选择").appendTo(select)
+      $('<option></option>')
+        .attr('disabled', true)
+        .text("---好友---")
+        .appendTo(select)
       $.each(response, function (key, value) {
         $('<option></option>')
           .attr('value', key)
           .text(value)
           .appendTo(select)
-      });
+      })
+    },
+    error: function (xhr, status, error) {
+      toast(xhr.responseText)
+    }
+  })
+  $.ajax({
+    url: "/group/all",
+    type: "get",
+    success: function (response) {
+      $('<option></option>')
+        .attr('disabled', true)
+        .text("---群---")
+        .appendTo(select)
+      $.each(response, function (key, value) {
+        $('<option></option>')
+          .attr('value', key)
+          .text(value)
+          .appendTo(select)
+      })
+      showHistory()
     },
     error: function (xhr, status, error) {
       toast(xhr.responseText)
@@ -132,7 +157,10 @@ function send() {
     content: `${username}: ${$("#msgContent").val()}`,
   }
   socket.send(JSON.stringify(msg))
-  // toast(msg)
+  if (msg.dest == $("#msgDest").val()) {
+    addHistory(msg)
+  }
+
   $("#msgContent").val("");
 }
 
@@ -150,8 +178,36 @@ function toast(msg) {
       $(this).remove();
     });
   }, 3000);
+
+  if (msg.src == $("#msgDest").val()) {
+    addHistory(msg)
+  }
 }
 
 function showHistory() {
+  var id = $("#msgDest").val()
+  if (!id) return
+  $.ajax({
+    url: "/history",
+    type: "GET",
+    data: {
+      id: id
+    },
+    success: function (response) {
+      // 处理成功响应
+      console.log(response);
+      // 在此处进行你想要的操作，如更新页面显示等
+      response.forEach(msg => addHistory(msg))
+    },
+    error: function (xhr, status, error) {
+      // 处理错误响应
+      console.log("请求失败:", xhr.responseText);
+    }
+  });
+}
 
+function addHistory(msg) {
+  $history.prepend(`<div>${msg.content ?
+    `<div class="dim dp05">${msg.src} ${new Date(msg.time)}</div>
+    ${msg.content}` : msg}</div>`)
 }

@@ -24,7 +24,9 @@ func PushMsg(msg *model.Message) {
 
 	msg.Time = time.Now().UnixNano() / int64(time.Millisecond)
 
-	db.AddMsg(msg)
+	db.StoreMsg(msg)
+
+	// 在线列表
 	// if model.Connections[msg.Dest] == nil {
 	// 	db.AddMsg()
 	// 	return

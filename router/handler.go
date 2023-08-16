@@ -25,6 +25,7 @@ func InitWebServer() {
 
 	model.Connections = make(map[string]*websocket.Conn)
 	router.GET("/ws", handleWebSocket)
+
 	router.GET("/history", VerifyToken(), handleGetHistory)
 
 	router.POST("/friend/add", VerifyToken(), handleAddFriend)
@@ -34,7 +35,7 @@ func InitWebServer() {
 	router.GET("/friend/all", VerifyToken(), handleListFriend)
 
 	router.POST("/group/add", VerifyToken(), handleAddGroup)
-	router.POST("/group/del", VerifyToken(), handleDelGroup)
+	router.POST("/group/del", VerifyToken(), handleLeaveGroup)
 	router.GET("/group/req", VerifyToken(), handleGetGroupReq)
 	router.POST("/group/req", VerifyToken(), handleRespGroupReq)
 	router.GET("/group/all", VerifyToken(), handleListGroup)
@@ -50,8 +51,4 @@ func InitWebServer() {
 		return
 	}
 	fmt.Println("网页服务器启动")
-}
-
-func handleGetHistory() {
-
 }
