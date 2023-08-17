@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleAddGroup(c *gin.Context) {
+func handleJoinGroup(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
 	groupName := c.PostForm("group_name")
 	content := c.PostForm("content")
@@ -31,7 +31,7 @@ func handleAddGroup(c *gin.Context) {
 		Content: db.MustGetNameById(uid) + "请求加群" + groupName,
 	})
 	c.JSON(http.StatusOK, gin.H{
-		"message":    "已发送好友申请",
+		"message":    "已发送加群申请",
 		"group_name": groupName,
 	})
 }
@@ -51,6 +51,86 @@ func handleLeaveGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "已退群",
 		"group_name": groupName,
+	})
+}
+
+func handleInviteGroup(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	groupName := c.PostForm("group_name")
+	invitee := c.PostForm("invitee")
+
+	// TODO: Implement logic for handling group invitation
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "邀请已发送",
+		"group_name": groupName,
+		"invitee":    invitee,
+	})
+}
+
+func handleKickGroup(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	groupName := c.PostForm("group_name")
+	member := c.PostForm("member")
+
+	// TODO: Implement logic for handling kicking a member from a group
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "已将成员踢出群组",
+		"group_name": groupName,
+		"member":     member,
+	})
+}
+
+func handleCreateGroup(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	groupName := c.PostForm("group_name")
+
+	// TODO: Implement logic for handling group creation
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "群组创建成功",
+		"group_name": groupName,
+	})
+}
+
+func handleDelGroup(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	groupName := c.PostForm("group_name")
+
+	// TODO: Implement logic for handling group dissolution
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "群组已解散",
+		"group_name": groupName,
+	})
+}
+
+func handleAddGadmin(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	groupName := c.PostForm("group_name")
+	admin := c.PostForm("admin")
+
+	// TODO: Implement logic for handling adding a group admin
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "已添加群组管理员",
+		"group_name": groupName,
+		"admin":      admin,
+	})
+}
+
+func handleDelGadmin(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	groupName := c.PostForm("group_name")
+	admin := c.PostForm("admin")
+
+	// TODO: Implement logic for handling removing a group admin
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "已移除群组管理员",
+		"group_name": groupName,
+		"admin":      admin,
 	})
 }
 

@@ -47,6 +47,108 @@ func LeaveGroup(uid string, groupName string) error {
 	return nil
 }
 
+func AddGroupAdmin(uid, groupName, admin string) error {
+	group, err := GetGroupByName(groupName)
+	if err != nil {
+		return fmt.Errorf("获取群组信息失败：%v", err)
+	}
+
+	if !IsGroupMember(group.Gid, uid) {
+		return fmt.Errorf("您不是该群的成员")
+	}
+
+	if !IsGroupAdmin(group.Gid, uid) {
+		return fmt.Errorf("您不是群管理员")
+	}
+
+	if IsGroupAdmin(group.Gid, admin) {
+		return fmt.Errorf("该用户已是群管理员")
+	}
+
+	err = rc.SAdd(context.Background(), "groupAdmin:"+group.Gid, admin).Err()
+	if err != nil {
+		return fmt.Errorf("添加群管理员失败：%v", err)
+	}
+
+	return nil
+}
+
+func DelGroupAdmin(uid, groupName, admin string) error {
+	group, err := GetGroupByName(groupName)
+	if err != nil {
+		return fmt.Errorf("获取群组信息失败：%v", err)
+	}
+
+	if !IsGroupMember(group.Gid, uid) {
+		return fmt.Errorf("您不是该群的成员")
+	}
+
+	if !IsGroupAdmin(group.Gid, uid) {
+		return fmt.Errorf("您不是群管理员")
+	}
+
+	if !IsGroupAdmin(group.Gid, admin) {
+		return fmt.Errorf("该用户不是群管理员")
+	}
+
+	err = rc.SRem(context.Background(), "groupAdmin:"+group.Gid, admin).Err()
+	if err != nil {
+		return fmt.Errorf("移除群管理员失败：%v", err)
+	}
+
+	return nil
+}
+
+func InviteGroup(uid, groupName, invitee string) error {
+	group, err := GetGroupByName(groupName)
+	if err != nil {
+		return fmt.Errorf("获取群组信息失败：%v", err)
+	}
+
+	if !IsGroupMember(group.Gid, uid) {
+		return fmt.Errorf("您不是该群的成员")
+	}
+
+	if IsGroupMember(group.Gid, invitee) {
+		return fmt.Errorf("该用户已是群成员")
+	}
+
+	err = rc.HSet(context.Background(), "groupReq:"+group.Gid, invitee, "").Err()
+	if err != nil {
+		return fmt.Errorf("邀请用户失败：%v", err)
+	}
+
+	return nil
+}
+
+func KickGroup(uid, groupName, member string) error {
+	group, err := GetGroupByName(groupName)
+	if err != nil {
+		return fmt.Errorf("获取群组信息失败：%v", err)
+	}
+
+	if !IsGroupMember(group.Gid, uid) {
+		return fmt.Errorf("您不是该群的成员")
+	}
+
+	if !IsGroupMember(group.Gid, member) {
+		return fmt.Errorf("该用户不是群成员")
+	}
+
+	if IsGroupAdmin(group.Gid, member) && !IsGroupAdmin(group.Gid, uid) {
+		return fmt.Errorf("您没有权限踢出群管理员")
+	}
+
+	err = rc.SRem(context.Background(), "group:"+group.Gid, member).Err()
+	if err != nil {
+		return fmt.Errorf("踢出群成员失败：%v", err)
+	}
+
+	rc.SRem(context.Background(), "group:"+member, group.Gid)
+
+	return nil
+}
+
 func ListGroupMembers(gid string) (map[string]string, error) {
 	memberList, err := rc.SMembers(context.Background(), "group:"+gid).Result()
 	if err != nil {

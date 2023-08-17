@@ -4,7 +4,7 @@
 <head>
   <title>c6m</title>
   <link rel="stylesheet" href="./css/style.css">
-  <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.2/css/all.min.css">
   <script src="https://cdn.staticfile.org/jquery/3.7.0/jquery.min.js"></script>
 </head>
 
@@ -32,14 +32,20 @@
       </div>
     </nav>
 
-    <div>
-      <button onclick="addFriend()"><i class="fa-solid fa-user-plus"></i></button>
-      <button onclick="delFriend()"><i class="fa-solid fa-user-minus"></i></button>
+    <div class="dp05">
+      <button onclick="addFriend()"><i class="fa-solid fa-user-plus"></i>添加好友</button>
+      <button onclick="delFriend()"><i class="fa-solid fa-user-minus"></i>删除好友</button>
       <button onclick="getFriendReq()">查看好友申请</button>
       <button onclick="respFriendReq()">处理好友申请</button>
-
-      <button onclick="addGroup()"><i class="fa-solid fa-user-group"></i>+</button>
-      <button onclick="leaveGroup()"><i class="fa-solid fa-user-group"></i>-</button>
+      <br>
+      <button onclick="joinGroup()"><i class="fa-solid fa-user-group"></i>加入</button>
+      <button onclick="leaveGroup()"><i class="fa-solid fa-user-group"></i>退出</button>
+      <button onclick="inviteGroup()"><i class="fa-solid fa-person-circle-plus"></i>邀请</button>
+      <button onclick="kickGroup()"><i class="fa-solid fa-person-circle-plus"></i>踢出</button>
+      <button onclick="createGroup()"><i class="fa-solid fa-user-group"></i>创建</button>
+      <button onclick="delGroup()"><i class="fa-solid fa-user-group"></i>解散</button>
+      <button onclick="addGroupAdmin()"><i class="fa-solid fa-user-gear"></i>加管</button>
+      <button onclick="delGroupAdmin()"><i class="fa-solid fa-user-gear"></i>下管</button>
       <button onclick="getGroupReq()">查看群申请</button>
       <button onclick="respGroupReq()">处理群申请</button>
     </div>
@@ -49,6 +55,7 @@
         <option value="0">请选择</option>
       </select>
       <button onclick="updateList()"><i class="fa-solid fa-rotate"></i></button>
+      <button onclick="upload()"><i class="fa-solid fa-file-arrow-up"></i></button>
       <span class="dim">Ctrl+Enter发送</span>
       <br>
       <textarea class="fullwidth" type="text" id="msgContent" placeholder="content" required></textarea>
@@ -73,5 +80,7 @@
 </body>
 
 <script src="./js/app.js"></script>
+<script src="./js/friend.js"></script>
+<script src="./js/group.js"></script>
 
 </html>
