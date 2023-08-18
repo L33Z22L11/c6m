@@ -21,7 +21,7 @@ import (
 // 定义用户结构体
 func CreateUser(username, password, question, answer string) (*model.Auth, error) {
 	// 验证用户名和密码是否符合规范
-	if !isValidUname(username) {
+	if !isValidName(username) {
 		return nil, fmt.Errorf("用户名[%s]格式错误: 长度3~18, 仅限数字、字母和下划线", username)
 	}
 
@@ -60,7 +60,7 @@ func CreateUser(username, password, question, answer string) (*model.Auth, error
 	return auth, nil
 }
 
-func isValidUname(username string) bool {
+func isValidName(username string) bool {
 	isVaildCharset := regexp.MustCompile("^[0-9A-Z_a-z]+$").MatchString(username)
 	haveProperLength := len(username) >= 3 && len(username) <= 18
 	return isVaildCharset && haveProperLength

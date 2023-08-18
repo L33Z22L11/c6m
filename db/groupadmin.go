@@ -10,8 +10,9 @@ import (
 )
 
 func CreateGroup(uid, gname string) (*model.Group, error) {
-	if len(gname) == 0 {
-		return nil, fmt.Errorf("群名称不能为空")
+	// 验证用户名和密码是否符合规范
+	if !isValidName(gname) {
+		return nil, fmt.Errorf("群名[%s]格式错误: 长度3~18, 仅限数字、字母和下划线", gname)
 	}
 
 	gid, _ := GetGidByGname(gname)

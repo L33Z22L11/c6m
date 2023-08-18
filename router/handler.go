@@ -27,6 +27,7 @@ func InitWebServer() {
 	router.GET("/ws", handleWebSocket)
 
 	router.GET("/history", VerifyToken(), handleGetHistory)
+	router.POST("/upload", VerifyToken(), handleUpload)
 
 	router.POST("/friend/add", VerifyToken(), handleAddFriend)
 	router.POST("/friend/del", VerifyToken(), handleDelFriend)
@@ -51,6 +52,7 @@ func InitWebServer() {
 		c.Redirect(http.StatusMovedPermanently, "/app")
 	})
 	router.Static("/app", "./web")
+	router.Static("/public", "./public")
 
 	err := router.Run(":4000")
 	if err != nil {

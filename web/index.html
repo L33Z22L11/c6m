@@ -27,7 +27,7 @@
     <nav>
       <h1 style="opacity:.9">c6m</h1>
       <div>
-        <button id="loginbtn" onclick="$('#loginpanel').css('display','')">登录</button>
+        <button onclick="location.reload()"><i class='fa-solid fa-arrow-right-from-bracket'></i></button>
         <button onclick="window.open(`./changepw.html?username=${username}`,'_self')">修改密码</button>
       </div>
     </nav>
@@ -56,9 +56,9 @@
       </select>
       <button onclick="updateList()"><i class="fa-solid fa-rotate"></i></button>
       <button onclick="upload()"><i class="fa-solid fa-file-arrow-up"></i></button>
-      <span class="dim">Enter发送, Shift+Enter换行</span>
+      <input type="file" id="file-input">
       <br>
-      <textarea class="fullwidth" type="text" id="msgContent" placeholder="content" required></textarea>
+      <textarea class="fullwidth" type="text" id="msgContent" placeholder="Enter发送, Shift+Enter换行" required></textarea>
       <script>
         $(document).on('keydown', '#msgContent', function (event) {
           if (event.keyCode === 13) {

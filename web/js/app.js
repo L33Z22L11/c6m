@@ -45,8 +45,6 @@ function login() {
         alert("WebSocket 连接关闭")
         location.reload()
       }
-      $("#loginbtn").html("<i class='fa-solid fa-arrow-right-from-bracket'></i>")
-      $("#loginbtn").attr('onclick', 'location.reload()')
       $('#loginpanel').css('display', 'none')
       updateList()
     },
@@ -102,7 +100,6 @@ function updateList() {
 
 function send() {
   var msg = {
-    type: $("#msgType").val(),
     time: new Date().getTime(),
     src: uid,
     dest: $("#msgDest").val(),
@@ -162,4 +159,26 @@ function addHistory(msg) {
   $history.prepend(`<div>${msg.content ?
     `<div class="dim dp05">${msg.src} ${new Date(msg.time)}</div>
     ${msg.content}` : msg}</div>`)
+}
+
+function upload() {
+  var formData = new FormData()
+  formData.append('file', $('#file-input')[0].files[0])
+  formData.append('dest', $("#msgDest").val())
+
+  $.ajax({
+    url: '/upload',
+    type: 'POST',
+    data: formData,
+    contentType: false,
+    processData: false,
+    success: function (response) {
+      // 处理服务器响应
+      toast(response)
+    },
+    error: function () {
+      // 处理错误情况
+      toast("上传文件失败")
+    }
+  })
 }
