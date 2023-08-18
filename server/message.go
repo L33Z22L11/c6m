@@ -32,15 +32,34 @@ func PushMsg(msg *model.Message) {
 	// 	return
 	// }
 
-	model.Connections[msg.Dest].WriteJSON(msg)
+	var dest []string
+	if msg.Src == "groupReq" {
+		adminMap, _ := db.ListGroupAdmin(msg.Dest)
+		for k := range adminMap {
+			dest = append(dest, k)
+		}
+	} else if msg.Dest[0] == 'g' {
+		destMap, _ := db.ListGroupMember(msg.Dest)
+		for k := range destMap {
+			dest = append(dest, k)
+		}
+	} else {
+		dest = append(dest, msg.Dest)
+	}
+
+	for _, d := range dest {
+		if conn, ok := model.Connections[d]; ok {
+			conn.WriteJSON(msg)
+		}
+	}
 }
 
 func IsVaildMsg(msg *model.Message) bool {
 	if msg.Src[0] == 'u' {
 		if msg.Dest[0] == 'u' {
-			return db.HaveFriend(msg.Src, msg.Dest)
+			return db.IsFriend(msg.Src, msg.Dest)
 		} else if msg.Dest[0] == 'g' {
-			return db.HaveGroup(msg.Src, msg.Dest)
+			return db.IsGroupMember(msg.Src, msg.Dest)
 		}
 	}
 	return true

@@ -81,7 +81,7 @@ func RespFriendReq(uid string, friendUid string, isAccept string) error {
 	return nil
 }
 
-func ListFriend(uid string) (map[string]string, error) {
+func GetFriend(uid string) (map[string]string, error) {
 	friendList, err := rc.SMembers(context.Background(), "friend:"+uid).Result()
 	if err != nil {
 		return nil, fmt.Errorf("获取好友列表失败:%s", err)
@@ -95,9 +95,9 @@ func ListFriend(uid string) (map[string]string, error) {
 	return friendMap, err
 }
 
-func HaveFriend(uid string, friendUid string) bool {
+func IsFriend(uid string, friendUid string) bool {
 	// 查询发送者的好友列表
-	friendMap, _ := ListFriend(uid)
+	friendMap, _ := GetFriend(uid)
 
 	// 判断接收者是否在好友列表中
 	return friendMap[friendUid] != ""

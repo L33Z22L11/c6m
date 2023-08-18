@@ -43,14 +43,14 @@ func GetMsgStorage(uid, id string) ([]*model.Message, error) {
 	var storageKey string
 	switch id[0] {
 	case 'u':
-		if !HaveFriend(uid, id) {
+		if !IsFriend(uid, id) {
 			return nil, fmt.Errorf("不是好友:%s", id)
 		}
 		uids := []string{uid, id}
 		sort.Strings(uids)
 		storageKey = "message:" + strings.Join(uids, ":")
 	case 'g':
-		if !HaveGroup(uid, id) {
+		if !IsGroupMember(uid, id) {
 			return nil, fmt.Errorf("不在此群:%s", id)
 		}
 		storageKey = "message:" + id

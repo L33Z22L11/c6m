@@ -5,8 +5,8 @@ import (
 	"fmt"
 )
 
-func JoinGroup(uid string, groupName string, content string) (string, error) {
-	gid, err := GetGidByGname(groupName)
+func JoinGroup(uid string, gname string, content string) (string, error) {
+	gid, err := GetGidByGname(gname)
 	if err != nil {
 		return "", err
 	}
@@ -16,7 +16,7 @@ func JoinGroup(uid string, groupName string, content string) (string, error) {
 		return "", fmt.Errorf("已经发送过一次群申请")
 	}
 
-	groupReqList, _ := GetGroupReq(uid)
+	groupReqList, _ := GetGroupReq(uid, gid)
 	if groupReqList[gid] != "" {
 		RespGroupReq(uid, gid, "1")
 	} else {
@@ -25,8 +25,8 @@ func JoinGroup(uid string, groupName string, content string) (string, error) {
 	return gid, nil
 }
 
-func LeaveGroup(uid string, groupName string) error {
-	gid, err := GetGidByGname(groupName)
+func LeaveGroup(uid string, gname string) error {
+	gid, err := GetGidByGname(gname)
 	if err != nil {
 		return err
 	}
@@ -41,79 +41,28 @@ func LeaveGroup(uid string, groupName string) error {
 		return fmt.Errorf("删除失败，群主请使用解散群功能")
 	}
 
-	rc.SRem(context.Background(), "gadmin:"+gid, uid)
+	rc.SRem(context.Background(), "groupAdmin:"+gid, uid)
 	rc.SRem(context.Background(), "group:"+gid, uid)
+	rc.SAdd(context.Background(), "inGroup:"+uid, gid)
 
 	return nil
 }
 
-func AddGroupAdmin(uid, groupName, admin string) error {
-	group, err := GetGroupByName(groupName)
+func InviteGroup(uid, gname, invitee string) error {
+	gid, err := GetGidByGname(gname)
 	if err != nil {
 		return fmt.Errorf("获取群组信息失败：%v", err)
 	}
 
-	if !IsGroupMember(group.Gid, uid) {
+	if !IsGroupMember(uid, gid) {
 		return fmt.Errorf("您不是该群的成员")
 	}
 
-	if !IsGroupAdmin(group.Gid, uid) {
-		return fmt.Errorf("您不是群管理员")
-	}
-
-	if IsGroupAdmin(group.Gid, admin) {
-		return fmt.Errorf("该用户已是群管理员")
-	}
-
-	err = rc.SAdd(context.Background(), "groupAdmin:"+group.Gid, admin).Err()
-	if err != nil {
-		return fmt.Errorf("添加群管理员失败：%v", err)
-	}
-
-	return nil
-}
-
-func DelGroupAdmin(uid, groupName, admin string) error {
-	group, err := GetGroupByName(groupName)
-	if err != nil {
-		return fmt.Errorf("获取群组信息失败：%v", err)
-	}
-
-	if !IsGroupMember(group.Gid, uid) {
-		return fmt.Errorf("您不是该群的成员")
-	}
-
-	if !IsGroupAdmin(group.Gid, uid) {
-		return fmt.Errorf("您不是群管理员")
-	}
-
-	if !IsGroupAdmin(group.Gid, admin) {
-		return fmt.Errorf("该用户不是群管理员")
-	}
-
-	err = rc.SRem(context.Background(), "groupAdmin:"+group.Gid, admin).Err()
-	if err != nil {
-		return fmt.Errorf("移除群管理员失败：%v", err)
-	}
-
-	return nil
-}
-
-func InviteGroup(uid, groupName, invitee string) error {
-	group, err := GetGroupByName(groupName)
-	if err != nil {
-		return fmt.Errorf("获取群组信息失败：%v", err)
-	}
-
-	if !IsGroupMember(group.Gid, uid) {
-		return fmt.Errorf("您不是该群的成员")
-	}
-
-	if IsGroupMember(group.Gid, invitee) {
+	if IsGroupMember(gid, invitee) {
 		return fmt.Errorf("该用户已是群成员")
 	}
 
-	err = rc.HSet(context.Background(), "groupReq:"+group.Gid, invitee, "").Err()
+	err = rc.HSet(context.Background(), "groupReq:"+gid, invitee, "").Err()
 	if err != nil {
 		return fmt.Errorf("邀请用户失败：%v", err)
 	}
@@ -121,35 +70,21 @@ func InviteGroup(uid, groupName, invitee string) error {
 	return nil
 }
 
-func KickGroup(uid, groupName, member string) error {
-	group, err := GetGroupByName(groupName)
+func GetGroup(uid string) (map[string]string, error) {
+	groupList, err := rc.SMembers(context.Background(), "inGroup:"+uid).Result()
 	if err != nil {
-		return fmt.Errorf("获取群组信息失败：%v", err)
+		return nil, fmt.Errorf("获取群成员列表失败:%s", err)
 	}
 
-	if !IsGroupMember(group.Gid, uid) {
-		return fmt.Errorf("您不是该群的成员")
+	groupMap := make(map[string]string)
+
+	for _, gid := range groupList {
+		groupMap[gid] = MustGetNameById(gid)
 	}
-
-	if !IsGroupMember(group.Gid, member) {
-		return fmt.Errorf("该用户不是群成员")
-	}
-
-	if IsGroupAdmin(group.Gid, member) && !IsGroupAdmin(group.Gid, uid) {
-		return fmt.Errorf("您没有权限踢出群管理员")
-	}
-
-	err = rc.SRem(context.Background(), "group:"+group.Gid, member).Err()
-	if err != nil {
-		return fmt.Errorf("踢出群成员失败：%v", err)
-	}
-
-	rc.SRem(context.Background(), "group:"+member, group.Gid)
-
-	return nil
+	return groupMap, err
 }
 
-func ListGroupMembers(gid string) (map[string]string, error) {
+func ListGroupMember(gid string) (map[string]string, error) {
 	memberList, err := rc.SMembers(context.Background(), "group:"+gid).Result()
 	if err != nil {
 		return nil, fmt.Errorf("获取群成员列表失败:%s", err)
@@ -157,16 +92,16 @@ func ListGroupMembers(gid string) (map[string]string, error) {
 
 	groupMap := make(map[string]string)
 
-	for _, groupgid := range memberList {
-		groupMap[groupgid] = MustGetNameById(groupgid)
+	for _, gid := range memberList {
+		groupMap[gid] = MustGetNameById(gid)
 	}
 	return groupMap, err
 }
 
-func HaveGroup(gid string, groupgid string) bool {
+func IsGroupMember(uid string, gid string) bool {
 	// 查询发送者的群列表
-	groupMap, _ := ListGroupMembers(gid)
+	groupMap, _ := ListGroupMember(gid)
 
 	// 判断接收者是否在群列表中
-	return groupMap[groupgid] != ""
+	return groupMap[uid] != ""
 }

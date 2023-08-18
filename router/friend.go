@@ -100,10 +100,10 @@ func handleRespFriendReq(c *gin.Context) {
 	})
 }
 
-func handleListFriend(c *gin.Context) {
+func handleGetFriend(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
 
-	friendList, err := db.ListFriend(uid)
+	friendList, err := db.GetFriend(uid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),

@@ -1,4 +1,5 @@
 var $history = $("#history")
+var $toast = $("#toast");
 
 function login() {
   $.ajax({
@@ -19,6 +20,30 @@ function login() {
       // 接收到消息时的处理逻辑
       socket.onmessage = function (event) {
         toast(JSON.parse(event.data))
+      }
+      // 处理错误事件
+      socket.onerror = function (error) {
+        // 在控制台打印错误信息
+        toast('WebSocket error:', error)
+        // 进行适当的错误处理逻辑
+        alert("WebSocket 连接错误")
+        location.reload()
+      }
+
+      // 处理关闭事件
+      socket.onclose = function (event) {
+        if (event.wasClean) {
+          // WebSocket 关闭是有意义的
+          console.log('WebSocket closed cleanly')
+        } else {
+          // WebSocket 关闭是意外的
+          console.error('WebSocket connection closed unexpectedly')
+        }
+        console.log('Close code:', event.code)
+        console.log('Close reason:', event.reason)
+        // 进行适当的关闭处理逻辑
+        alert("WebSocket 连接关闭")
+        location.reload()
       }
       $("#loginbtn").html("<i class='fa-solid fa-arrow-right-from-bracket'></i>")
       $("#loginbtn").attr('onclick', 'location.reload()')
@@ -94,21 +119,20 @@ function send() {
 // 显示消息
 function toast(msg) {
   console.log(msg);
-  var $toast = $("#toast");
-  var toastHtml = `<div>${msg.content ?
-    `<div class="dim dp05">${msg.src} ${new Date(msg.time)}</div>
-      ${msg.content}` : msg}</div>`;
-  $toast.prepend(toastHtml);
+  if (msg.src == $("#msgDest").val()) {
+    addHistory(msg)
+    return
+  }
 
+  $toast.prepend(`<div>${msg.content ?
+    `<div class="dim dp05">${msg.src} ${new Date(msg.time)}</div>
+      ${msg.content}` : msg}</div>`);
   setTimeout(function () {
     $toast.children().last().fadeOut(500, function () {
       $(this).remove();
     });
   }, 3000);
 
-  if (msg.src == $("#msgDest").val()) {
-    addHistory(msg)
-  }
 }
 
 function showHistory() {
@@ -124,6 +148,7 @@ function showHistory() {
       // 处理成功响应
       console.log(response);
       // 在此处进行你想要的操作，如更新页面显示等
+      $history.html("")
       response.forEach(msg => addHistory(msg))
     },
     error: function (xhr, status, error) {

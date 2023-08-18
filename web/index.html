@@ -56,12 +56,18 @@
       </select>
       <button onclick="updateList()"><i class="fa-solid fa-rotate"></i></button>
       <button onclick="upload()"><i class="fa-solid fa-file-arrow-up"></i></button>
-      <span class="dim">Ctrl+Enter发送</span>
+      <span class="dim">Enter发送, Shift+Enter换行</span>
       <br>
       <textarea class="fullwidth" type="text" id="msgContent" placeholder="content" required></textarea>
       <script>
         $(document).on('keydown', '#msgContent', function (event) {
-          if (event.ctrlKey && event.keyCode === 13) send()
+          if (event.keyCode === 13) {
+            if (event.shiftKey) return
+            else {
+              send();
+              event.preventDefault(); // 阻止默认的换行行为
+            }
+          }
         })
       </script>
     </div>

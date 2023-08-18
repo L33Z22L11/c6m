@@ -1,39 +1,195 @@
 function joinGroup() {
-  // TODO: Implement logic for joining a group
+  var groupName = prompt("群组名");
+  var content = prompt("申请内容");
+  if (!groupName || !content) return;
+  $.ajax({
+    url: "/group/join",
+    type: "POST",
+    data: {
+      group_name: groupName,
+      content: content,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      console.log(xhr.responseText);
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function leaveGroup() {
-  // TODO: Implement logic for leaving a group
+  var groupName = prompt("群组名");
+  if (!groupName) return;
+  $.ajax({
+    url: "/group/leave",
+    type: "POST",
+    data: {
+      group_name: groupName,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function inviteGroup() {
-  // TODO: Implement logic for inviting someone to a group
+  var groupName = prompt("群组名");
+  var invitee = prompt("被邀请者");
+  if (!groupName || !invitee) return;
+  $.ajax({
+    url: "/group/invite",
+    type: "POST",
+    data: {
+      group_name: groupName,
+      invitee: invitee,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      console.log(xhr.responseText);
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function kickGroup() {
-  // TODO: Implement logic for kicking a member out of a group
+  var groupName = prompt("群组名");
+  var member = prompt("成员名");
+  if (!groupName || !member) return;
+  $.ajax({
+    url: "/group/kick",
+    type: "POST",
+    data: {
+      group_name: groupName,
+      member: member,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      console.log(xhr.responseText);
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function createGroup() {
-  // TODO: Implement logic for creating a group
+  var groupName = prompt("群组名");
+  if (!groupName) return;
+  $.ajax({
+    url: "/group/create",
+    type: "POST",
+    data: {
+      group_name: groupName,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      console.log(xhr.responseText);
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function delGroup() {
-  // TODO: Implement logic for dissolving a group
+  var groupName = prompt("群组名");
+  if (!groupName) return;
+  $.ajax({
+    url: "/group/del",
+    type: "POST",
+    data: {
+      group_name: groupName,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      console.log(xhr.responseText);
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function addGroupAdmin() {
-  // TODO: Implement logic for adding a group admin
+  var groupName = prompt("群组名");
+  var admin = prompt("管理员名");
+  if (!groupName || !admin) return;
+  $.ajax({
+    url: "/group/admin/add",
+    type: "POST",
+    data: {
+      group_name: groupName,
+      admin: admin,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      console.log(xhr.responseText);
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function delGroupAdmin() {
-  // TODO: Implement logic for removing a group admin
+  var groupName = prompt("群组名");
+  var admin = prompt("管理员名");
+  if (!groupName || !admin) return;
+  $.ajax({
+    url: "/group/admin/del",
+    type: "POST",
+    data: {
+      group_name: groupName,
+      admin: admin,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      console.log(xhr.responseText);
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function getGroupReq() {
-  // TODO: Implement logic for retrieving group join requests
+  var gid = prompt("群组Gid");
+  $.ajax({
+    url: "/group/req?gid=" + gid,
+    type: "GET",
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      toast(xhr.responseText);
+    },
+  });
 }
 
 function respGroupReq() {
-  // TODO: Implement logic for responding to group join requests
+  var gid = prompt("群组Gid");
+  var isAccept = prompt("是否接受请求？（1-接受，0-拒绝）");
+  if (!groupGuid || !isAccept) return;
+  $.ajax({
+    url: "/group/req",
+    type: "POST",
+    data: {
+      gid: gid,
+      accept: isAccept,
+    },
+    success: function (response) {
+      toast(JSON.stringify(response));
+    },
+    error: function (xhr, status, error) {
+      console.log(xhr.responseText);
+      toast(xhr.responseText);
+    },
+  });
 }

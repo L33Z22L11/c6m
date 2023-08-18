@@ -4,6 +4,7 @@ import (
 	"c6m/db"
 	"c6m/model"
 	"c6m/server"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ func handleJoinGroup(c *gin.Context) {
 		content = "我是" + db.MustGetNameById(uid)
 	}
 
-	groupGuid, err := db.JoinGroup(uid, groupName, content)
+	groupgid, err := db.JoinGroup(uid, groupName, content)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -27,7 +28,7 @@ func handleJoinGroup(c *gin.Context) {
 
 	server.PushMsg(&model.Message{
 		Src:     "groupReq",
-		Dest:    groupGuid,
+		Dest:    groupgid,
 		Content: db.MustGetNameById(uid) + "请求加群" + groupName,
 	})
 	c.JSON(http.StatusOK, gin.H{
@@ -37,10 +38,10 @@ func handleJoinGroup(c *gin.Context) {
 }
 
 func handleLeaveGroup(c *gin.Context) {
-	guid := c.MustGet("uid").(string)
+	uid := c.MustGet("uid").(string)
 	groupName := c.PostForm("group_name")
 
-	err := db.LeaveGroup(guid, groupName)
+	err := db.LeaveGroup(uid, groupName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -59,7 +60,13 @@ func handleInviteGroup(c *gin.Context) {
 	groupName := c.PostForm("group_name")
 	invitee := c.PostForm("invitee")
 
-	// TODO: Implement logic for handling group invitation
+	err := db.InviteGroup(uid, groupName, invitee)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "邀请已发送",
@@ -73,7 +80,13 @@ func handleKickGroup(c *gin.Context) {
 	groupName := c.PostForm("group_name")
 	member := c.PostForm("member")
 
-	// TODO: Implement logic for handling kicking a member from a group
+	err := db.KickGroup(uid, groupName, member)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "已将成员踢出群组",
@@ -86,11 +99,19 @@ func handleCreateGroup(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
 	groupName := c.PostForm("group_name")
 
-	// TODO: Implement logic for handling group creation
+	group, err := db.CreateGroup(uid, groupName)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "群组创建成功",
-		"group_name": groupName,
+		"gid":        group.Gid,
+		"group_name": group.Gname,
+		"owner":      group.Owner,
 	})
 }
 
@@ -98,7 +119,13 @@ func handleDelGroup(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
 	groupName := c.PostForm("group_name")
 
-	// TODO: Implement logic for handling group dissolution
+	err := db.DelGroup(uid, groupName)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "群组已解散",
@@ -111,7 +138,13 @@ func handleAddGadmin(c *gin.Context) {
 	groupName := c.PostForm("group_name")
 	admin := c.PostForm("admin")
 
-	// TODO: Implement logic for handling adding a group admin
+	err := db.AddGroupAdmin(uid, groupName, admin)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "已添加群组管理员",
@@ -125,7 +158,13 @@ func handleDelGadmin(c *gin.Context) {
 	groupName := c.PostForm("group_name")
 	admin := c.PostForm("admin")
 
-	// TODO: Implement logic for handling removing a group admin
+	err := db.DelGroupAdmin(uid, groupName, admin)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "已移除群组管理员",
@@ -135,9 +174,10 @@ func handleDelGadmin(c *gin.Context) {
 }
 
 func handleGetGroupReq(c *gin.Context) {
-	guid := c.MustGet("uid").(string)
+	uid := c.MustGet("uid").(string)
+	gid := c.Query("gid")
 
-	groupReqList, err := db.GetGroupReq(guid)
+	groupReqList, err := db.GetGroupReq(uid, gid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -149,11 +189,11 @@ func handleGetGroupReq(c *gin.Context) {
 }
 
 func handleRespGroupReq(c *gin.Context) {
-	guid := c.MustGet("uid").(string)
-	groupGuid := c.PostForm("group_guid")
+	uid := c.MustGet("uid").(string)
+	gid := c.PostForm("gid")
 	isAccept := c.PostForm("accept")
 
-	err := db.RespGroupReq(guid, groupGuid, isAccept)
+	err := db.RespGroupReq(uid, gid, isAccept)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -163,27 +203,49 @@ func handleRespGroupReq(c *gin.Context) {
 
 	var content string
 	if isAccept == "1" {
-		content = "成功加入群" + db.MustGetNameById(guid)
+		content = "成功加入群" + db.MustGetNameById(gid)
 	} else {
-		content = db.MustGetNameById(guid) + "拒绝让你加入"
+		content = db.MustGetNameById(gid) + "拒绝让你加入"
 	}
 
 	server.PushMsg(&model.Message{
 		Src:     "groupReq",
-		Dest:    groupGuid,
+		Dest:    gid,
 		Content: content,
 	})
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "已处理请求",
-		"group_name": db.MustGetNameById(guid),
+		"group_name": db.MustGetNameById(gid),
 	})
 }
 
-func handleListGroup(c *gin.Context) {
-	guid := c.MustGet("uid").(string)
+func handleGetGroup(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
 
-	groupList, err := db.ListGroupMembers(guid)
+	groupList, err := db.GetGroup(uid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, groupList)
+}
+
+func handleListGroupMember(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	gid := c.Query("gid")
+
+	if !db.IsGroupMember(uid, gid) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Errorf("您不是该群的成员"),
+		})
+		return
+	}
+
+	groupList, err := db.ListGroupMember(gid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
