@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 func JoinGroup(uid string, gname string, content string) (string, error) {
@@ -11,17 +12,16 @@ func JoinGroup(uid string, gname string, content string) (string, error) {
 		return "", err
 	}
 
+	if IsGroupMember(uid, gid) {
+		return "", fmt.Errorf("已经是群成员")
+	}
+
 	requested, _ := rc.HGet(context.Background(), "groupReq:"+gid, uid).Result()
 	if requested != "" {
 		return "", fmt.Errorf("已经发送过一次群申请")
 	}
 
-	groupReqList, _ := GetGroupReq(uid, gid)
-	if groupReqList[gid] != "" {
-		RespGroupReq(uid, gid, "1")
-	} else {
-		rc.HSet(context.Background(), "groupReq:"+gid, uid, content)
-	}
+	rc.HSet(context.Background(), "groupReq:"+gid, uid, content)
 	return gid, nil
 }
 
@@ -48,26 +48,23 @@ func LeaveGroup(uid string, gname string) error {
 	return nil
 }
 
-func InviteGroup(uid, gname, invitee string) error {
+func InfoGroup(uid, gname string) (string, error) {
 	gid, err := GetGidByGname(gname)
 	if err != nil {
-		return fmt.Errorf("获取群组信息失败：%v", err)
+		return "", fmt.Errorf("不存在这个群")
 	}
-
 	if !IsGroupMember(uid, gid) {
-		return fmt.Errorf("您不是该群的成员")
+		return "", fmt.Errorf("您不是该群的成员")
 	}
 
-	if IsGroupMember(gid, invitee) {
-		return fmt.Errorf("该用户已是群成员")
-	}
+	group, _ := GetGroupByGid(gid)
+	adminList, _ := rc.SMembers(context.Background(), "groupAdmin:"+gid).Result()
+	memberList, _ := rc.SMembers(context.Background(), "group:"+gid).Result()
 
-	err = rc.HSet(context.Background(), "groupReq:"+gid, invitee, "").Err()
-	if err != nil {
-		return fmt.Errorf("邀请用户失败：%v", err)
-	}
+	info := fmt.Sprintf("gid: %s, 群主: %s, 管理员: %s, 成员: %s",
+		gid, group.Owner, strings.Join(adminList, " & "), strings.Join(memberList, " & "))
 
-	return nil
+	return info, nil
 }
 
 func GetGroup(uid string) (map[string]string, error) {

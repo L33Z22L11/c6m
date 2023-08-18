@@ -37,7 +37,7 @@ func InitWebServer() {
 
 	router.POST("/group/join", VerifyToken(), handleJoinGroup)
 	router.POST("/group/leave", VerifyToken(), handleLeaveGroup)
-	router.POST("/group/invite", VerifyToken(), handleInviteGroup)
+	router.POST("/group/info", VerifyToken(), handleInfoGroup)
 	router.POST("/group/kick", VerifyToken(), handleKickGroup)
 	router.POST("/group/create", VerifyToken(), handleCreateGroup)
 	router.POST("/group/del", VerifyToken(), handleDelGroup)

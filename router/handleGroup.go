@@ -55,12 +55,11 @@ func handleLeaveGroup(c *gin.Context) {
 	})
 }
 
-func handleInviteGroup(c *gin.Context) {
+func handleInfoGroup(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
 	groupName := c.PostForm("group_name")
-	invitee := c.PostForm("invitee")
 
-	err := db.InviteGroup(uid, groupName, invitee)
+	info, err := db.InfoGroup(uid, groupName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -69,9 +68,7 @@ func handleInviteGroup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":    "邀请已发送",
-		"group_name": groupName,
-		"invitee":    invitee,
+		"content": info,
 	})
 }
 
@@ -191,9 +188,10 @@ func handleGetGroupReq(c *gin.Context) {
 func handleRespGroupReq(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
 	gid := c.PostForm("gid")
+	newid := c.PostForm("newid")
 	isAccept := c.PostForm("accept")
 
-	err := db.RespGroupReq(uid, gid, isAccept)
+	err := db.RespGroupReq(uid, gid, newid, isAccept)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),

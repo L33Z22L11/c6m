@@ -88,19 +88,19 @@ func AddGroupAdmin(uid, gname, admin string) error {
 		return fmt.Errorf("获取群组信息失败：%v", err)
 	}
 
-	if !IsGroupMember(uid, gid) {
-		return fmt.Errorf("您不是该群的成员")
+	if !IsGroupMember(admin, gid) {
+		return fmt.Errorf("此人不是群员")
 	}
 
 	if !IsGroupOwner(uid, gid) {
 		return fmt.Errorf("您不是群主")
 	}
 
-	if IsGroupAdmin(admin, gid) {
-		return fmt.Errorf("该用户已是群管理员")
+	if IsGroupAdmin(admin, gid) || IsGroupOwner(admin, gid) {
+		return fmt.Errorf("该用户已是群管理员/群主")
 	}
 
-	err = rc.SAdd(context.Background(), "groupAdmin:"+admin, gid).Err()
+	err = rc.SAdd(context.Background(), "groupAdmin:"+gid, admin).Err()
 	if err != nil {
 		return fmt.Errorf("添加群管理员失败：%v", err)
 	}
@@ -126,7 +126,7 @@ func DelGroupAdmin(uid, gname, admin string) error {
 		return fmt.Errorf("该用户不是群管理员")
 	}
 
-	err = rc.SRem(context.Background(), "groupAdmin:"+admin, gid).Err()
+	err = rc.SRem(context.Background(), "groupAdmin:"+gid, admin).Err()
 	if err != nil {
 		return fmt.Errorf("移除群管理员失败：%v", err)
 	}
@@ -184,18 +184,22 @@ func GetGroupReq(uid, gid string) (map[string]string, error) {
 	return groupReqList, err
 }
 
-func RespGroupReq(uid, gid, isAccept string) error {
-	_, err := rc.HGet(context.Background(), "groupReq:"+uid, gid).Result()
+func RespGroupReq(uid, gid, newid, isAccept string) error {
+	if !IsGroupAdmin(uid, gid) && !IsGroupOwner(uid, gid) {
+		return fmt.Errorf("无权限")
+	}
+
+	_, err := rc.HGet(context.Background(), "groupReq:"+gid, newid).Result()
 	if err == redis.Nil {
 		return fmt.Errorf("不存在这个群申请")
 	}
 
 	if isAccept == "1" {
-		rc.SAdd(context.Background(), "group:"+gid, uid)
-		rc.SAdd(context.Background(), "inGroup:"+uid, gid)
+		rc.SAdd(context.Background(), "group:"+gid, newid)
+		rc.SAdd(context.Background(), "inGroup:"+newid, gid)
 	}
 
-	rc.HDel(context.Background(), "groupReq:"+uid, gid)
+	rc.HDel(context.Background(), "groupReq:"+gid, uid)
 	return nil
 }
 
@@ -213,7 +217,7 @@ func ListGroupAdmin(gid string) (map[string]string, error) {
 	return groupMap, err
 }
 
-func IsGroupAdmin(uid string, gid string) bool {
+func IsGroupAdmin(uid, gid string) bool {
 	// 查询发送者的群列表
 	groupMap, _ := ListGroupAdmin(uid)
 
@@ -221,7 +225,7 @@ func IsGroupAdmin(uid string, gid string) bool {
 	return groupMap[gid] != ""
 }
 
-func IsGroupOwner(uid string, gid string) bool {
+func IsGroupOwner(uid, gid string) bool {
 	group, err := GetGroupByGid(gid)
 	if err != nil {
 		return false
